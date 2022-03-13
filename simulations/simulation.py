@@ -3,6 +3,7 @@ from portfolio import *
 from scenarios import *
 from pricing import *
 from shocks import no_shock
+import pandas as pd
 
 
 class Simulation:
@@ -14,6 +15,7 @@ class Simulation:
         self.pricing_engine = pricing_engine or default_pricing_engine()
         self.shock = shock or no_shock
         self.prices = None
+        #print("Simulation initialized")
 
     def with_portfolio(self, portfolio):
         self.portfolio = portfolio
@@ -40,6 +42,7 @@ class Simulation:
 
     def get_prices(self):  # Mediator
         if self.prices is None:  # Lazy evaluation
+            print("Calculating prices")
             self.prices = [
                 self.portfolio.price(self.shock(s), self.pricing_engine)
                 for s in self.scenario_generator()
@@ -56,12 +59,47 @@ class Simulation:
         prices = self.get_prices()
         return np.std(prices)
 
-    def report(self):  # Facade
+    def report(self, output=None):  # Facade
         prices = self.get_prices()
-        print("Mean price:         ", np.mean(prices))
-        print("Minimum price:      ", np.min(prices))
-        print("Maximum price:      ", np.max(prices))
-        print("Standard deviation: ", np.std(prices))
+        print("Mean price:         ", np.mean(prices), file=output)
+        print("Minimum price:      ", np.min(prices), file=output)
+        print("Maximum price:      ", np.max(prices), file=output)
+        print("Standard deviation: ", np.std(prices), file=output)
+
+class VectorizedSimulation(Simulation):
+    def shocked_scenarios_df(self):        
+        return pd.DataFrame([self.shock(s) for s in self.scenario_generator()])
+
+    def get_prices(self):
+        if self.prices is None:
+            #print("Calculating prices (vectorized)")
+            scenarios_df = self.shocked_scenarios_df()
+            self.prices = self.portfolio.price(scenarios_df, self.pricing_engine)
+        return self.prices
+
+
+def batch(it, batch_size=1000):
+    buffer=[]
+    for i,x in enumerate(it):
+        if len(buffer)>=batch_size:
+            yield pd.DataFrame(buffer)
+            buffer=[]
+        buffer.append(x)
+    if len(buffer):
+        yield pd.DataFrame(buffer)
+
+class BatchSimulation(Simulation):
+    def shocked_scenario_batches(self):
+        for x in batch(self.shock(s) for s in self.scenario_generator()):
+            yield x
+
+    def get_prices(self):
+        if self.prices is None:
+            self.prices=[]
+            for i, scenarios_df in enumerate(self.shocked_scenario_batches()):
+                #print(f"Calculating prices (batch {i+1})")
+                self.prices.extend(self.portfolio.price(scenarios_df, self.pricing_engine))
+        return self.prices
 
 
 if __name__ == "__main__":
@@ -70,11 +108,21 @@ if __name__ == "__main__":
         "-n",
         "--max_number_of_scenarios",
         action="store",
-        default=1000,
         help="Maximal number of scenarios",
     )
 
     args = parser.parse_args()
-    update_config(**vars(args))
+    if args.max_number_of_scenarios is not None:
+        update_config(**vars(args))
 
+    print("Start")
     sim = Simulation().report()
+    print("End")
+
+#    print("Vectorized")
+#    sim = VectorizedSimulation().report()
+#    print("End")
+
+    print("Batch")
+    sim = BatchSimulation().report()
+    print("End")

@@ -15,7 +15,9 @@ def monte_carlo_scenarios(mean_scenario, covariance, keys=None, seed=123):
         keys = keys
     mean = np.array([mean_scenario[key] for key in keys])
     random = np.random.RandomState(seed)
+    i=0
     while True:
+        i+=1
         d = dict(mean_scenario)
         d.update(
             dict(
@@ -24,6 +26,7 @@ def monte_carlo_scenarios(mean_scenario, covariance, keys=None, seed=123):
                 )
             )
         )
+        #print(f"scenario {i} generated")
         yield d
 
 
@@ -56,5 +59,11 @@ def default_scenarios():
     else:
         scenarios = scenarios_from_file(config()["scenarios"])
     if config()["max_number_of_scenarios"]:
+        print("Max number of scenarios:", config()["max_number_of_scenarios"])
         scenarios = islice(scenarios, 0, config()["max_number_of_scenarios"])
+    else:
+        print("Unlimited number of scenarios")
+
     return scenarios
+
+    

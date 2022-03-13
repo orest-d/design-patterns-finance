@@ -1,0 +1,5 @@
+RECIPES:
+  - default_portfolio/simulation/report/baseline_performance.txt
+  - default_portfolio/simulation-10000/report/mc10k.txt
+  - default_portfolio/simulation-100/scenarios/scenario_sample.xlsx
+  - default_portfolio/simulation-100000/scenarios/scenarios_100k.parquet  
