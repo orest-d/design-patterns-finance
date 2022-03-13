@@ -10,11 +10,13 @@ from liquer.recipes import *
 
 from flask import Flask
 import liquer.server.blueprint as bp
-app = Flask(__name__)
-app.register_blueprint(bp.app, url_prefix='/liquer')
 
-@app.route('/')
-@app.route('/index.html')
+app = Flask(__name__)
+app.register_blueprint(bp.app, url_prefix="/liquer")
+
+
+@app.route("/")
+@app.route("/index.html")
 def index():
     return """<h1>My simulation control site</h1>
     <ul>
@@ -23,7 +25,8 @@ def index():
     </ul>
     """
 
-mount_folder("local",".")
+
+mount_folder("local", ".")
 mount("results", RecipeSpecStore(FileStore("results")))
 
 app.run()

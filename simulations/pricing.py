@@ -48,5 +48,18 @@ class PricingEngineWithProxyAndResidual(PricingEngine):
         return scenario[ticker]
 
 
+class NullPricingEngine:
+    def equity_price(self, scenario, ticker):
+        return 0
+
+    def equity_volatility(self, scenario, ticker):
+        return 0
+
+    def vanilla_call_option_price(
+        self, strike, time_to_maturity, spot_price, volatility, interest_rate
+    ):
+        return 0
+
+
 def default_pricing_engine():
     return eval(config()["pricing_engine"])()

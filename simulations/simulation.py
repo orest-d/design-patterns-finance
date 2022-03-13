@@ -15,7 +15,25 @@ class Simulation:
         self.pricing_engine = pricing_engine or default_pricing_engine()
         self.shock = shock or no_shock
         self.prices = None
-        #print("Simulation initialized")
+        # print("Simulation initialized")
+
+    @classmethod
+    def empty(cls):
+        return cls(
+            portfolio=NullAsset(),
+            scenario_generator=lambda: [],
+            shock=no_shock,
+            pricing_engine=NullPricingEngine(),
+        )
+
+    @classmethod
+    def baseline(cls):
+        return cls(
+            portfolio=default_portfolio(),
+            scenario_generator = default_scenarios,
+            pricing_engine = default_pricing_engine(),
+            shock = no_shock
+        )
 
     def with_portfolio(self, portfolio):
         self.portfolio = portfolio
@@ -66,27 +84,29 @@ class Simulation:
         print("Maximum price:      ", np.max(prices), file=output)
         print("Standard deviation: ", np.std(prices), file=output)
 
+
 class VectorizedSimulation(Simulation):
-    def shocked_scenarios_df(self):        
+    def shocked_scenarios_df(self):
         return pd.DataFrame([self.shock(s) for s in self.scenario_generator()])
 
     def get_prices(self):
         if self.prices is None:
-            #print("Calculating prices (vectorized)")
+            # print("Calculating prices (vectorized)")
             scenarios_df = self.shocked_scenarios_df()
             self.prices = self.portfolio.price(scenarios_df, self.pricing_engine)
         return self.prices
 
 
 def batch(it, batch_size=1000):
-    buffer=[]
-    for i,x in enumerate(it):
-        if len(buffer)>=batch_size:
+    buffer = []
+    for i, x in enumerate(it):
+        if len(buffer) >= batch_size:
             yield pd.DataFrame(buffer)
-            buffer=[]
+            buffer = []
         buffer.append(x)
     if len(buffer):
         yield pd.DataFrame(buffer)
+
 
 class BatchSimulation(Simulation):
     def shocked_scenario_batches(self):
@@ -95,10 +115,12 @@ class BatchSimulation(Simulation):
 
     def get_prices(self):
         if self.prices is None:
-            self.prices=[]
+            self.prices = []
             for i, scenarios_df in enumerate(self.shocked_scenario_batches()):
-                #print(f"Calculating prices (batch {i+1})")
-                self.prices.extend(self.portfolio.price(scenarios_df, self.pricing_engine))
+                # print(f"Calculating prices (batch {i+1})")
+                self.prices.extend(
+                    self.portfolio.price(scenarios_df, self.pricing_engine)
+                )
         return self.prices
 
 
@@ -119,9 +141,9 @@ if __name__ == "__main__":
     sim = Simulation().report()
     print("End")
 
-#    print("Vectorized")
-#    sim = VectorizedSimulation().report()
-#    print("End")
+    #    print("Vectorized")
+    #    sim = VectorizedSimulation().report()
+    #    print("End")
 
     print("Batch")
     sim = BatchSimulation().report()

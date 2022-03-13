@@ -2,17 +2,22 @@ from liquer import *
 from pricing import *
 from simulation import *
 
+
 @first_command
 def default_portfolio():
     import portfolio
+
     return portfolio.default_portfolio()
+
 
 @first_command
 def portfolio_from(filename):
     import portfolio
+
     with open(filename) as f:
         x = yaml.load(f)
         return eval(x["asset_type"]).from_dict(x)
+
 
 @command
 def simulation(portfolio, scenario_count=1000):
@@ -30,19 +35,24 @@ def simulation(portfolio, scenario_count=1000):
         )
         return islice(scenarios, 0, scenario_count)
 
-    return VectorizedSimulation(portfolio=portfolio, scenario_generator=scenario_generator)
+    return VectorizedSimulation(
+        portfolio=portfolio, scenario_generator=scenario_generator
+    )
 
 
 @command
 def with_pricing_engine(simulation, engine="PricingEngine"):
     return simulation.with_pricing_engine(eval(engine)())
 
+
 @command
 def report(simulation):
-    from io import StringIO 
+    from io import StringIO
+
     f = StringIO()
     simulation.report(f)
     return f.getvalue()
+
 
 @command
 def scenarios(simulation):

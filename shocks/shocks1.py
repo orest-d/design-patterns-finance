@@ -15,16 +15,12 @@ def danske_100(scenario):
     return scenario
 
 
-class Asset:
-    pass
-
-
-class Equity(Asset):
-    def __init__(self, name):
-        self.name = name
+class Equity:
+    def __init__(self, ticker):
+        self.ticker = ticker
 
     def price(self, scenario):
-        return scenario[self.name]
+        return scenario[self.ticker]
 
 
 def shock_impact(scenario, asset, shock):

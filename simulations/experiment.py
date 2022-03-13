@@ -11,7 +11,9 @@ modified_pricing = baseline.clone().with_pricing_engine(
     PricingEngineWithProxyAndResidual()
 )
 
-banks_minus100bps = relative_shock(NORDEA_TICK, 0.99) #+ relative_shock(DANSKE_TICK, 0.99)
+banks_minus100bps = relative_shock(
+    NORDEA_TICK, 0.99
+)  # + relative_shock(DANSKE_TICK, 0.99)
 
 data = []
 for shock_name, shock in [
@@ -20,6 +22,7 @@ for shock_name, shock in [
     ("Banks -100bps", banks_minus100bps),
 ]:
     for model_name, model in [
+        ("Empty", Simulation.empty()),
         ("Baseline", baseline),
         ("Modified pricing", modified_pricing),
     ]:
